@@ -8,6 +8,10 @@
         <servlet-name>DownloadFile</servlet-name>
         <servlet-class>com.fabri.home.cloud.server.resources.DownloadFile</servlet-class>
     </servlet>
+    <servlet>
+        <servlet-name>ShowDirectoryContents</servlet-name>
+        <servlet-class>com.fabri.home.cloud.server.resources.ShowDirectoryContents</servlet-class>
+    </servlet>
     <servlet-mapping>
         <servlet-name>HomeServlet</servlet-name>
         <url-pattern>/</url-pattern>
@@ -16,9 +20,21 @@
         <servlet-name>DownloadFile</servlet-name>
         <url-pattern>/download</url-pattern>
     </servlet-mapping>
+    <servlet-mapping>
+        <servlet-name>ShowDirectoryContents</servlet-name>
+        <url-pattern>/ShowDirectoryContents</url-pattern>
+    </servlet-mapping>
     <session-config>
         <session-timeout>
             30
         </session-timeout>
     </session-config>
+    <filter>
+        <filter-name>CorsFilter</filter-name>
+        <filter-class>org.apache.catalina.filters.CorsFilter</filter-class>
+    </filter>
+    <filter-mapping>
+        <filter-name>CorsFilter</filter-name>
+        <url-pattern>/*</url-pattern>
+    </filter-mapping>
 </web-app>
