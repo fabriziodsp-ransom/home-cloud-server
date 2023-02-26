@@ -42,8 +42,10 @@ public class ShowDirectoryContents extends HttpServlet {
         try {
             Path dir = Paths.get(path);
             
-            Files.walk(dir,1).forEach(pathToFile -> filterPaths(pathToFile.toFile()));
-        } catch (InvalidPathException e) {
+            Files.walk(dir,1).forEach(pathToFile -> 
+                    filterPaths(pathToFile.toFile(), dir));
+            
+        } catch (InvalidPathException | IOException e) {
             response.setStatus(404);
             PrintWriter out = response.getWriter();
             
@@ -67,10 +69,12 @@ public class ShowDirectoryContents extends HttpServlet {
      * Filters if {@param file} is directory or file.
      * @param file the file in question.
      */
-    private void filterPaths(File file) {
-        if (file.isDirectory()) {
+    private void filterPaths(File file, Path parent) {
+        if (file.isDirectory() && !file.equals(parent.toFile())) {
             this.folderPaths.add("\""+file.getName()+"\"");
-        } else {
+        }
+        
+        if (!file.isDirectory() && !file.equals(parent.toFile())) {
             this.filePaths.add("\""+file.getName()+"\"");
         }
     }
