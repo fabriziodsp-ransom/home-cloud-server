@@ -13,6 +13,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.InputStream;
+import java.io.PrintWriter;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 
@@ -50,8 +51,12 @@ public class DownloadFile extends HttpServlet {
             }
         } catch (NullPointerException | IOException e) {
             response.setContentType("application/json");
-            ServletOutputStream out = response.getOutputStream();
-            out.print("{'error': true, 'message': "+e.getMessage()+"}");
+            response.setStatus(404);
+            PrintWriter out = response.getWriter();
+            
+            out.print("{\"error\": true, \"message\": \""
+                    +e.getMessage().replace("\\", "/")
+                    +"\"}");
             out.close();
         }
     }
