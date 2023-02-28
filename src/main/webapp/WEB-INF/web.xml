@@ -2,11 +2,11 @@
 <web-app version="6.0" xmlns="https://jakarta.ee/xml/ns/jakartaee" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="https://jakarta.ee/xml/ns/jakartaee https://jakarta.ee/xml/ns/jakartaee/web-app_6_0.xsd">
     <servlet>
         <servlet-name>DownloadFile</servlet-name>
-        <servlet-class>com.fabri.home.cloud.server.resources.DownloadFile</servlet-class>
+        <servlet-class>com.home.cloud.server.endpoints.DownloadFile</servlet-class>
     </servlet>
     <servlet>
         <servlet-name>ShowDirectoryContents</servlet-name>
-        <servlet-class>com.fabri.home.cloud.server.resources.ShowDirectoryContents</servlet-class>
+        <servlet-class>com.home.cloud.server.endpoints.ShowDirectoryContents</servlet-class>
     </servlet>
     <servlet-mapping>
         <servlet-name>DownloadFile</servlet-name>
@@ -14,7 +14,7 @@
     </servlet-mapping>
     <servlet-mapping>
         <servlet-name>ShowDirectoryContents</servlet-name>
-        <url-pattern>/ShowDirectoryContents</url-pattern>
+        <url-pattern>/show-directory-contents</url-pattern>
     </servlet-mapping>
     <session-config>
         <session-timeout>
