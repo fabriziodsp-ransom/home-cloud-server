@@ -2,7 +2,7 @@
 A small & home-made Java server to access the host's files from the private network. Like a private Google Drive ;)
 
 ## What it does?
-Lets you download the files and explore the directories of the host machine. On port 8080 by default.
+Lets you download the files and explore the directories of the host machine. On port 8080 by default. You can use the Apache Tomcat (v10.1.6) server attached on the latest release to host this "_home cloud_".
 
 ## How it works?
 Via making `GET` requests to two endpoints: `show-directory-contents` & `download` using a `p` parameter specifying the path.
