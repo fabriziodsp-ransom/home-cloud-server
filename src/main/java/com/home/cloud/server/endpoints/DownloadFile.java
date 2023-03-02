@@ -26,7 +26,6 @@ package com.home.cloud.server.endpoints;
 import java.io.IOException;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.ServletOutputStream;
-import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.File;
@@ -35,13 +34,15 @@ import java.io.InputStream;
 import java.io.PrintWriter;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.io.FileNotFoundException;
+import com.home.cloud.server.abstracts.HomeCloudServlet;
 import com.home.cloud.server.exceptions.FileIsDirectoryException;
 
 /**
  *
  * @author Fabrizio
  */
-public class DownloadFile extends HttpServlet {
+public class DownloadFile extends HomeCloudServlet {
 
     /**
      * Processes requests for both HTTP <code>GET</code> and <code>POST</code>
@@ -54,37 +55,29 @@ public class DownloadFile extends HttpServlet {
      */
     protected void processRequest(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
-        File fileToDownload = new File(request.getParameter("p"));
-        if (fileToDownload.isDirectory()) {
-            response.setStatus(400);
-            PrintWriter servletOutput = response.getWriter();
-            response.setContentType("application/json");
 
-            servletOutput.print("{\"error\": true, \"message\": \""
-                    + fileToDownload.getAbsolutePath() + " is a folder."
-                    + "\"}");
-            servletOutput.close();
-        }
-        try (ServletOutputStream servletOutputStream = response.getOutputStream(); InputStream in = new FileInputStream(fileToDownload);) {
-
-            response.setContentType(Files.probeContentType(Paths.get(fileToDownload.getAbsolutePath())));
-
-            response.setHeader("Content-disposition", "attachment; filename=" + fileToDownload.getName());
-
-            response.setStatus(200);
-
-            byte[] buffer = new byte[(4 * 1024)];
-            int numberBytesToRead;
-            while ((numberBytesToRead = in.read(buffer)) > 0) {
-                servletOutputStream.write(buffer, 0, numberBytesToRead);
+        String filePath = request.getParameter("p");
+        File fileToDownload = new File(filePath);
+        try {
+            
+            if (!fileToDownload.exists()) {
+                throw new FileNotFoundException(fileToDownload.getName());
             }
-        } catch (NullPointerException e) {
+
+            if (fileToDownload.isDirectory()) {
+                throw new FileIsDirectoryException();
+            }
+
+            processResponse(response, fileToDownload);
+
+        } catch (FileNotFoundException e) {
             PrintWriter servletOutput = response.getWriter();
+            response.setStatus(404);
             response.setContentType("application/json");
 
             servletOutput.print("{\"error\": true, \"message\": \""
-                    + e.getCause().getMessage()
-                    + "\"}");
+                    + e.getMessage()
+                    + " Does not exist on target directory.\" }");
             servletOutput.close();
         } catch (IOException e) {
             PrintWriter servletOutput = response.getWriter();
@@ -95,6 +88,34 @@ public class DownloadFile extends HttpServlet {
                     + e.getMessage().replace("\\", "/")
                     + "\"}");
             servletOutput.close();
+        } catch (FileIsDirectoryException ex) {
+            response.setStatus(400);
+            PrintWriter servletOutput = response.getWriter();
+            response.setContentType("application/json");
+
+            servletOutput.print("{\"error\": true, \"message\": \""
+                    + fileToDownload.getAbsolutePath().replace("\\", "/")
+                    + " is a folder.\"}");
+            servletOutput.close();
+        }
+    }
+
+    @Override
+    protected void processResponse(HttpServletResponse response, File fileToDownload) throws IOException {
+
+        response.setContentType(Files.probeContentType(Paths.get(fileToDownload.getAbsolutePath())));
+        response.setHeader("Content-disposition", "attachment; filename=" + fileToDownload.getName());
+        response.setHeader("Cache-control", "max-age");
+        response.setStatus(200);
+
+        try (ServletOutputStream servletOutputStream = response.getOutputStream(); 
+                InputStream in = new FileInputStream(fileToDownload)) {
+
+            byte[] buffer = new byte[(4 * 1024)];
+            int numberBytesToRead;
+            while ((numberBytesToRead = in.read(buffer)) > 0) {
+                servletOutputStream.write(buffer, 0, numberBytesToRead);
+            }
         }
     }
 

@@ -23,9 +23,10 @@
  */
 package com.home.cloud.server.endpoints;
 
+import com.home.cloud.server.abstracts.HomeCloudServlet;
+import com.home.cloud.server.exceptions.FileIsNotDirectoryException;
 import java.io.IOException;
 import jakarta.servlet.ServletException;
-import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.File;
@@ -36,15 +37,18 @@ import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  *
  * @author Fabrizio
  */
-public class ShowDirectoryContents extends HttpServlet {
+public class ShowDirectoryContents extends HomeCloudServlet {
 
     private ArrayList<String> folderPaths = new ArrayList<>();
     private ArrayList<String> filePaths = new ArrayList<>();
+    private String path = null;
 
     /**
      * Processes requests for both HTTP <code>GET</code> and <code>POST</code>
@@ -57,39 +61,49 @@ public class ShowDirectoryContents extends HttpServlet {
      */
     protected void processRequest(HttpServletRequest request, HttpServletResponse response)
             throws ServletException, IOException {
-        response.setContentType("application/json;charset=UTF-8");
-        String path = request.getParameter("p");
-        PrintWriter out = response.getWriter();
-        response.setHeader("Cache-Control", "max-age");
+        path = request.getParameter("p");
 
         try {
             Path dir = Paths.get(path);
-            Files.walk(dir, 1).forEach(pathToFile -> 
-                filterPaths(pathToFile.toFile(), dir));
-        
+
+            if (dir.toFile().isFile()) {
+                throw new FileIsNotDirectoryException(dir.toString() + " Reason: is file.");
+            }
+
+            Files.walk(dir, 1).forEach(pathToFile
+                    -> filterPaths(pathToFile.toFile(), dir));
+
         } catch (InvalidPathException | NoSuchFileException e) {
+
+            PrintWriter out = response.getWriter();
+            response.setContentType("application/json;charset=UTF-8");
+            response.setHeader("Cache-control", "max-age");
             response.setStatus(404);
+
             out.print("{\"error\": true, \"message\": \"Path not found: "
                     + e.getMessage().replace("\\", "/")
                     + "\"}");
             out.close();
-            flushArrays();
-        }
+        } catch (FileIsNotDirectoryException e) {
+            PrintWriter out = response.getWriter();
+            response.setContentType("application/json;charset=UTF-8");
+            response.setHeader("Cache-control", "max-age");
+            response.setStatus(400);
 
-        try (out) {
-            out.print("{\"current_dir\": \"" + path + "\",\"files\":"
-                    + this.filePaths
-                    + ",\"folders\":"
-                    + this.folderPaths + "}");
-            flushArrays();
+            out.print("{\"error\": true, \"message\": \"Unable to navigate into: "
+                    + e.getMessage().replace("\\", "/")
+                    + "\"}");
+            out.close();
         }
+        processResponse(response);
     }
 
     /**
-     * Filters if {
+     * Filters files from directories
      *
-     * @param file} is directory or file.
-     * @param file the file in question.
+     *
+     * @param file      The file in question.
+     * @param parent    The parent path of the file.
      */
     private void filterPaths(File file, Path parent) {
         if (file.isDirectory() && !file.equals(parent.toFile())) {
@@ -101,9 +115,32 @@ public class ShowDirectoryContents extends HttpServlet {
         }
     }
 
-    private void flushArrays() {
+    /**
+     * Flushes ArrayLists so the next call doesn't contain the previous
+     * information.
+     */
+    private void flushArrayLists() {
         this.folderPaths.clear();
         this.filePaths.clear();
+    }
+
+    @Override
+    protected void processResponse(HttpServletResponse response) {
+
+        try (PrintWriter out = response.getWriter();) {
+            response.setContentType("application/json;charset=UTF-8");
+            response.setHeader("Cache-control", "max-age");
+            response.setStatus(200);
+            
+            out.print("{\"current_dir\": \"" + this.path + "\",\"files\":"
+                    + this.filePaths
+                    + ",\"folders\":"
+                    + this.folderPaths + "}");
+        } catch (IOException ex) {
+            Logger.getLogger(ShowDirectoryContents.class.getName()).log(Level.SEVERE, null, ex);
+        } finally {
+            flushArrayLists();
+        }
     }
 
     // <editor-fold defaultstate="collapsed" desc="HttpServlet methods. Click on the + sign on the left to edit the code.">
