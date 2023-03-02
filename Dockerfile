@@ -17,7 +17,7 @@ ADD apache-tomcat-10.1.6.tar.gz /usr/bin/tomcat
 # The server .war file initial location (since tomcat isn't installed yet)
 RUN mkdir /opt/app
 WORKDIR /opt/app
-COPY home-cloud-server-0.0.1.war .
+COPY home-cloud-server-0.1.war .
 RUN echo Testing tomcat...
 RUN /usr/bin/tomcat/apache-tomcat-10.1.6/bin/catalina.sh version
 CMD ["echo", "Welcome!"]
