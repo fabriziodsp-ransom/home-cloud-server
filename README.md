@@ -1,3 +1,5 @@
+[![Docker Image Build](https://github.com/fabriziodsp-ransom/home-cloud-server/actions/workflows/docker-image.yml/badge.svg)](https://github.com/fabriziodsp-ransom/home-cloud-server/actions/workflows/docker-image.yml)
+
 # home-cloud-server
 A small & home-made Java server to access the host's files from the private network. Like a private Google Drive ;)
 
